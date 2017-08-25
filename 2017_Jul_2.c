@@ -22,7 +22,7 @@ Job *create_list(FILE *fin)
 	char name[NAZIV], cat[KATEGORIJA];
 	int wage;
 
-	while (fscanf(fin, "%30s:%20s:%d[\n]", &name, &cat, &wage) == 3)
+	while (fscanf(fin, "%30s:%20s:%d\n", &name, &cat, &wage) == 3)
 	{
 		Job *p = malloc(sizeof *p);
 		ALLOC_CHECK(p);
@@ -30,22 +30,29 @@ Job *create_list(FILE *fin)
 		strcpy(p->cat, cat);
 		p->w = wage;
 
-		if (node)
+		if (!node)
 		{
 			node = p;
 		}
 		else
 		{
+			prev = NULL;
 			pom = node;
-			while (pom->w > p->w && pom)
+			while (pom && pom->w >= p->w)
 			{
 				prev = pom;
 				pom = pom->next;
 			}
 			if (!prev)
-				pom = p;
+			{
+				p->next = node;
+				node = p;
+			}
 			else
+			{
+				p->next = pom;
 				prev->next = p;
+			}
 		}
 	}
 	return node;
@@ -59,7 +66,7 @@ void job_search(Job *node, char nc[KATEGORIJA], int w)
 	
 	for (curr = node; curr; curr = curr->next)
 	{
-		if (!(strcmp(curr->cat, nc)) && curr->w == w)
+		if (!(strcmp(curr->cat, nc)) && curr->w >= w)
 		{
 			printf("%s:%d\n", curr->name, w);
 		}
@@ -85,16 +92,15 @@ int main(void)
 
 	fin = fopen(FILE_IN, "r");
 	FILE_CHECK(fin);
-	create_list(fin);
+	node = create_list(fin);
 	fclose(fin);
 
 	printf("Zeljena kategorija? \n");
-	gets(nc);
+	scanf("%30[^\n]", nc);
 	printf("Minimalna plata? \n");
-	scanf("%d\n", &w);
+	scanf("%d", &w);
 
 	job_search(node, nc, w);
 	clear_all(node);
-
 	return 0;
 }
